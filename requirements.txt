@@ -1,0 +1,19 @@
+# Stage 0 - the app itself
+streamlit>=1.40
+python-dotenv>=1.0
+
+# Stage 1 - reading files and making them searchable
+python-pptx>=1.0      # reads PowerPoint decks
+pypdf>=5.0            # reads PDFs
+sentence-transformers>=3.0  # turns text into vectors, runs on your computer
+chromadb>=0.5         # the local search database
+
+# Stage 3 - asking the AI service why a result matched
+requests>=2.31        # sends the request to Groq
+
+# Stage 7 - reading images
+pillow>=10.0          # opens and shrinks images before sending them
+
+# R3 - reading the spreadsheet of public links, and YouTube captions
+openpyxl>=3.1              # reads .xlsx without needing pandas
+youtube-transcript-api>=1.2  # fetches public captions, free, no API key

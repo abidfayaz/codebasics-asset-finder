@@ -1,0 +1,38 @@
+# ---------------------------------------------------------------------------
+# SECRETS - never let these reach GitHub
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+# Streamlit's local secrets file. On the deployed app you paste secrets into
+# the Secrets box instead; this file is only ever for testing on your machine.
+.streamlit/secrets.toml
+*.key
+*.pem
+
+# ---------------------------------------------------------------------------
+# TOO BIG FOR GITHUB
+# GitHub refuses any single file over 100 MB. This deck is about 154 MB.
+# Leaving it out costs nothing at search time: its slides and pictures are
+# already inside chroma_store, and the app never reopens a deck once indexed.
+# ---------------------------------------------------------------------------
+# No leading path, so this matches the deck wherever it sits - there is a copy
+# in sample_assets AND another at the top of the project.
+DA vs DS vs DE.pptx
+
+# Anything else that would blow the limit. Add names here if they appear.
+*.pptx.bak
+
+# ---------------------------------------------------------------------------
+# Python junk
+# ---------------------------------------------------------------------------
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# ---------------------------------------------------------------------------
+# NOTE: chroma_store/ and index_status.json are deliberately NOT ignored.
+# They are the ready-made search index, and the deployed app needs them in
+# order to search without re-indexing anything.
+# ---------------------------------------------------------------------------
