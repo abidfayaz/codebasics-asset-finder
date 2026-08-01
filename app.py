@@ -366,18 +366,23 @@ def render_result_card(result: dict, query: str, weak: bool = False) -> None:
         if result["type"] == "youtube":
             # A video is not a file, so showing a "file location" would be a
             # lie. Give a link that actually opens it instead.
-            st.markdown(
-                f"<a href='{html.escape(result['path'])}' target='_blank' "
-                f"rel='noopener noreferrer' "
-                f"style='display:inline-block; background:{ACCENT}; "
-                f"color:#ffffff; text-decoration:none; font-weight:600; "
-                f"font-size:0.85rem; padding:7px 16px; border-radius:6px; "
-                f"margin-top:2px;'>▶ Watch on YouTube</a>"
-                f"<div style='font-size:0.72rem; color:{MUTED}; "
-                f"margin-top:6px; overflow-wrap:anywhere;'>"
-                f"{html.escape(result['path'])}</div>",
-                unsafe_allow_html=True,
-            )
+            link = search_module.web_link(result)
+            if link:
+                st.markdown(
+                    f"<a href='{html.escape(link)}' target='_blank' "
+                    f"rel='noopener noreferrer' "
+                    f"style='display:inline-block; background:{ACCENT}; "
+                    f"color:#ffffff; text-decoration:none; font-weight:600; "
+                    f"font-size:0.85rem; padding:7px 16px; border-radius:6px; "
+                    f"margin-top:2px;'>▶ Watch on YouTube</a>"
+                    f"<div style='font-size:0.72rem; color:{MUTED}; "
+                    f"margin-top:6px; overflow-wrap:anywhere;'>"
+                    f"{html.escape(link)}</div>",
+                    unsafe_allow_html=True,
+                )
+            else:
+                # Better to show nothing than a button that goes nowhere.
+                st.caption("Video address unavailable for this result.")
         else:
             # For real files: where it is, with a copy button for free. Shows
             # the folder on this machine when the file is here, and the short

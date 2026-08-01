@@ -696,7 +696,8 @@ def index_videos(collection, status: dict, summary: dict,
             for number, part in enumerate(parts, start=1)
         ]
 
-        stored = _store_chunks(collection, video_key, Path(url), "youtube",
+        # The URL is passed as plain text, NOT as a Path - see _store_chunks.
+        stored = _store_chunks(collection, video_key, url, "youtube",
                                chunks, "", display_name=title)
 
         record.update({
@@ -748,7 +749,7 @@ def plain_failure_reason(error: Exception, file_type: str) -> str:
     return f"{name}: {str(error)[:120]}"
 
 
-def _relative_path(path: Path, file_type: str) -> str:
+def _relative_path(path, file_type: str) -> str:
     """
     Where this file sits inside the assets folder, e.g. "Decks/svm.pptx".
 
@@ -759,12 +760,12 @@ def _relative_path(path: Path, file_type: str) -> str:
     if file_type == "youtube":
         return ""
     try:
-        return str(path.resolve().relative_to(config.ASSETS_FOLDER)).replace("\\", "/")
+        return str(Path(path).resolve().relative_to(config.ASSETS_FOLDER)).replace("\\", "/")
     except Exception:
-        return path.name
+        return Path(path).name
 
 
-def _store_chunks(collection, file_key: str, path: Path, file_type: str,
+def _store_chunks(collection, file_key: str, path, file_type: str,
                   chunks: list[dict], modified: str,
                   display_name: str = None) -> int:
     """
@@ -795,7 +796,11 @@ def _store_chunks(collection, file_key: str, path: Path, file_type: str,
         metadatas.append({
             "file_key": file_key,
             # A video's name is its title, not the last part of a web address.
-            "file_name": display_name or path.name,
+            "file_name": display_name or Path(path).name,
+            # A web address must be stored exactly as written. Passing one
+            # through Path() on Windows turns "https://youtu.be/x" into
+            # "https:\youtu.be\x", which a browser does not recognise as a web
+            # address at all - it reads it as a page on the current site.
             "path": str(path),
             # The same location, written relative to the assets folder. The
             # full path above is only meaningful on the machine that did the

@@ -216,6 +216,33 @@ def local_file(result: dict):
     return None
 
 
+def web_link(result: dict) -> str:
+    """
+    A result's web address, cleaned up and checked.
+
+    Returns "" if what we have is not a usable web address, so the app can
+    leave the link out rather than render one that goes nowhere. A link
+    missing its "https://" is treated by the browser as a page on the current
+    site, which is how a "Watch on YouTube" button once ended up loading the
+    app's own address for ever.
+    """
+    raw = (result.get("path") or "").strip()
+    if not raw:
+        return ""
+
+    # Windows path separators can creep in if a URL is ever handled as a file
+    # path. Undo that, then repair the "https:/" that results.
+    cleaned = raw.replace("\\", "/")
+    if cleaned.startswith("https:/") and not cleaned.startswith("https://"):
+        cleaned = cleaned.replace("https:/", "https://", 1)
+    if cleaned.startswith("http:/") and not cleaned.startswith("http://"):
+        cleaned = cleaned.replace("http:/", "http://", 1)
+
+    if not cleaned.startswith(("http://", "https://")):
+        return ""
+    return cleaned
+
+
 def display_location(result: dict) -> str:
     """
     What to show as the result's location.
