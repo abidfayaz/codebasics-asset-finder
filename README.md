@@ -419,6 +419,12 @@ All live in `.env`:
 | `CLOSEST_FEW` | `3` | How many to show in the fallback |
 | `LLM_MODEL` | `llama-3.3-70b-versatile` | Groq's text model |
 | `VISION_MODEL` | `qwen/qwen3.6-27b` | Groq's vision model |
+| `READ_ONLY` | `false` | `true` on the published app: hides the "Run indexing" button, and shows library-relative file locations instead of server paths |
+| `LLM_BASE_URL` | Groq's address | Point the text model at a different OpenAI-compatible provider |
+| `VISION_BASE_URL` / `VISION_API_KEY` | blank | Fill in only to put the image step on a different provider from the text step |
+| `CHROMA_DIR` | `./chroma_store` | Where the search index is kept |
+| `STATUS_FILE` | `./index_status.json` | Where the record of what was read is kept |
+| `EMBEDDING_MODEL` | `all-MiniLM-L6-v2` | The model that turns text into vectors, on your machine |
 
 Leave the `VISION_*` settings blank to use the same Groq account as the text
 model. Fill them in only to put the image step on a different provider — that is
@@ -426,6 +432,57 @@ a three-line change and nothing else moves.
 
 **Settings are read once at startup.** After editing `.env`, stop the app
 (`Ctrl+C`) and start it again — a browser refresh is not enough.
+
+---
+
+## Publishing it yourself
+
+The repository already carries a ready-made index, so a published copy searches
+straight away without re-reading anything.
+
+1. Go to <https://share.streamlit.io>, sign in with GitHub, choose **New app**.
+2. Pick this repository, branch `main`, main file `app.py`.
+3. Open **Advanced settings → Secrets** and paste this, with your own Groq key
+   in place of the placeholder:
+
+```toml
+LLM_API_KEY = "gsk_your_groq_key_here"
+READ_ONLY = "true"
+```
+
+4. Click **Deploy**. The first build takes five to ten minutes, because it
+   installs PyTorch. Later updates are quick.
+
+`READ_ONLY = "true"` matters: without it the published app shows a "Run
+indexing" button that has no source decks to read and would spend API credit for
+nothing.
+
+Nothing else is needed - every other setting has a sensible default, so the
+published app behaves exactly like the local one.
+
+**Secrets never go in the repository.** `.env` and `.streamlit/secrets.toml` are
+both ignored by git, and the key lives only in your `.env` locally and in the
+Secrets box on the server.
+
+**Who can open the published app** depends on the repository. A private
+repository produces an app only you and people you invite can open; making the
+repository public makes the app public too. Since the sample content belongs to
+a client and includes photographs of identifiable people, private is the safer
+default.
+
+To update the published app afterwards, commit and push - it redeploys itself:
+
+```bash
+git add -A
+```
+
+```bash
+git commit -m "describe what changed"
+```
+
+```bash
+git push
+```
 
 ---
 
