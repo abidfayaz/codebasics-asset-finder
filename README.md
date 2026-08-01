@@ -39,14 +39,44 @@ first** — however many words you searched for. Each result card shows:
   like "the" and "how" are ignored so they do not light up everything
 - a **preview**: the actual picture for an image, a slide-shaped frame for a
   deck slide, the quoted passage for a video
-- a way to get to it: the full file path with a copy button, or a
-  **"Watch on YouTube"** link for videos
+- a way to get to it: where the file lives, with a copy button, or a
+  **"Watch on YouTube"** link for videos. Read
+  *Finding a file versus opening it* below before you expect a result to open
 
 **No dead ends.** If nothing clears the quality threshold you get
 *"Nothing matched exactly — here are the 3 closest"* rather than an empty screen.
 
 **Recent searches** appear as clickable chips above the box. They last as long as
 the browser tab is open.
+
+### ⚠️ Finding a file versus opening it — read this first
+
+**This app finds things. It does not open them, and it does not give you a copy
+of them.** A result tells you exactly which file, and which slide or page inside
+it. Going and opening that file is your step, from your own library.
+
+That is deliberate — see BUILD_SPEC section 8, *"Copying file content out of the
+app (only reveal the path / link back)"*. It means your decks and PDFs stay in
+your own storage and are never served to whoever happens to have the app's web
+address.
+
+**What this means in practice depends on where the app is running:**
+
+| Running it… | The location shown | Can you open the file from it? |
+|---|---|---|
+| **On your own computer** (`streamlit run app.py`) | The full path, e.g. `C:\Users\you\...\star_schema.pptx` | **Yes.** Copy it and paste it into File Explorer — the file opens. |
+| **On the published web app** | The short path inside the library, e.g. `Decks/star_schema.pptx` | **No.** It is a folder location on a server, not a web address. Pasting it into a browser will not work. |
+
+**So the "copy the location and open the file" step only works when you run the
+app on your own machine.** On the published version, the location tells you what
+to look for in your own library; you then open it from there.
+
+Videos are the exception: a video result has a real **"Watch on YouTube"** link
+that works everywhere, because a video genuinely does live at a web address.
+
+Images and slides do not need opening at all in most cases — the card already
+shows the picture, or the slide's text, so you can usually tell whether it is the
+thing you wanted without leaving the app. That is the point of the previews.
 
 ### Processing log
 
@@ -379,6 +409,25 @@ to a local folder, and the app would watch that folder. Nothing about the indexe
 changes — it already reads a local folder recursively and picks up new, changed
 and deleted files.
 
+**Results would link straight into OneDrive.** This is the proper answer to the
+limitation described in *Finding a file versus opening it*. While indexing, each
+file's OneDrive or SharePoint web link would be recorded alongside its path, and
+a result would then carry an **Open in OneDrive** button that behaves exactly
+like the "Watch on YouTube" button does for videos — one click, straight to the
+file, in the browser.
+
+Two things make that the right design rather than serving files from the app:
+
+- **Permissions stay where they belong.** OneDrive decides who may open what.
+  Someone without access to a folder gets OneDrive's own "no access" page, not a
+  copy of a file the app handed out.
+- **Nothing is duplicated.** At 11 TB the app could never hold the files. It
+  holds the index and points into storage that already exists.
+
+The groundwork is done: results already carry a link field, used today for
+videos. Filling it with a OneDrive link for files is a change to the indexing
+step, not to the search or the interface.
+
 **Keeping content private.** For a private deployment, both AI steps would run on
 self-hosted models: the vision model and the embedding model would run on company
 hardware, so **no file content would ever leave the company network**. The
@@ -412,9 +461,10 @@ Honest list of what this prototype does not do yet.
    meaning comes from two pictures side by side is understood as two things.
 7. **Vision descriptions are the model's words, not yours.** Search matches what
    the model wrote about a picture, so very small print in an image may not match.
-8. **Results reveal a path; they do not open the file.** A browser cannot open a
-   local folder for security reasons, so file results show the full path with a
-   copy button.
+8. **Results point at a file; they never open or serve it.** See
+   *Finding a file versus opening it* above. On the published copy the location
+   is a path inside the content library, which cannot be opened from a browser.
+   Linking straight into OneDrive would fix this — noted under production below.
 
 ### What is indexed today
 
