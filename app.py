@@ -384,11 +384,17 @@ def render_result_card(result: dict, query: str, weak: bool = False) -> None:
                 # Better to show nothing than a button that goes nowhere.
                 st.caption("Video address unavailable for this result.")
         else:
-            # For real files: where it is, with a copy button for free. Shows
-            # the folder on this machine when the file is here, and the short
-            # path inside the assets folder when it is not - never a path from
-            # somebody else's computer.
-            st.caption("File location")
+            # For real files: where it is, with a copy button for free.
+            #
+            # This is a location, not a web link - the app points you at the
+            # file in your own library rather than serving a copy of it. The
+            # wording says which kind of location it is, so nobody tries to
+            # paste a folder path into a browser.
+            if config.READ_ONLY:
+                st.caption("Where this sits in the content library "
+                           "(a folder location, not a web link)")
+            else:
+                st.caption("File location — paste into File Explorer to open")
             st.code(search_module.display_location(result), language=None)
 
 

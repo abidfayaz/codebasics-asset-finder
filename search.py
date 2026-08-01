@@ -247,12 +247,18 @@ def display_location(result: dict) -> str:
     """
     What to show as the result's location.
 
-    The file's own folder if we can find it, otherwise the short path inside
-    the assets folder - which is honest and readable, rather than showing a
-    path from somebody else's computer that means nothing here.
+    Running on your own machine, this is the full path - you can paste it into
+    File Explorer and the file opens.
+
+    On the published copy it is the short path inside the content library
+    instead. The full path there would be a folder on the server, which means
+    nothing to a visitor and looks like a broken web address if they try it.
     """
     if result["type"] == "youtube":
         return result["path"]
+
+    if config.READ_ONLY:
+        return result.get("rel_path") or result.get("path", "")
 
     found = local_file(result)
     if found:
