@@ -10,6 +10,34 @@ pandas dataframe" and it finds the minute of the video where that is explained.
 
 ---
 
+## Try it live
+
+**<https://codebasics-asset-finder-aklk28whajna8hm7hos9fa.streamlit.app>**
+
+Nothing to install and nothing to set up — the published app already holds a
+ready-made index of the sample content, so you can search it as soon as the page
+opens. Give the first search a few seconds; the app wakes up if it has been idle.
+
+**Access:** this app is shared privately, because the sample content belongs to
+a client. If you land on a Streamlit sign-in page, you need to be invited — ask
+the repository owner. Everything the app does is described below, and it runs
+identically on your own machine using the install steps further down.
+
+Searches worth trying there:
+
+- `DAX Fundamentals` — finds a thumbnail by words printed inside the picture
+- `Sam Altman warning about an AI bubble` — finds a slide that has no typed text
+  on it at all
+- `what is power bi` — one question, answered by a slide, a video and two images
+- `kubernetes docker deployment pipeline` — nothing in the library covers it, so
+  it says so rather than pretending
+
+One difference from running it yourself: on the published app a result shows
+where a file sits in the library but cannot open it. See
+*Finding a file versus opening it* below.
+
+---
+
 ## What it does
 
 The app has two screens.
@@ -112,6 +140,12 @@ python -m venv .venv
 ```bash
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
+
+> **The commands in this README are written for Windows.** On Mac or Linux the
+> only difference is where Python lives inside `.venv` — use
+> `./.venv/bin/python` wherever you see `.\.venv\Scripts\python.exe`. So the
+> line above becomes `./.venv/bin/python -m pip install -r requirements.txt`,
+> and later on `./.venv/bin/python -m streamlit run app.py`.
 
 That last step downloads a few hundred megabytes (it includes PyTorch) and takes
 a few minutes.
@@ -297,6 +331,18 @@ a new tab. There is no file path, because a video is not a file.
 - **1 spreadsheet** — `public_links.xlsx`, the list of YouTube/LinkedIn/website
   links
 
+Between them those decks hold **58 pictures** large enough to be worth reading,
+and the spreadsheet yields **30 distinct videos**. That is where the 792
+searchable pieces come from — see *What is indexed today* below.
+
+**One file is missing from this repository.** `DA vs DS vs DE.pptx` is about
+154 MB, and GitHub refuses any single file over 100 MB, so it is left out — see
+`.gitignore`. Everything from it is still searchable: all 53 of its pieces —
+27 slides of text and 26 picture descriptions — are inside `chroma_store`. The app never
+reopens a deck after indexing, so nothing about search is affected. Only the
+file itself is absent, which is why its results show a location you will not
+find in a fresh clone.
+
 **A good deck to demonstrate picture reading:**
 `is_the_ai_bubble_about_to_burst.pptx` has 8 slides but typed text on only one of
 them. The other slides are news screenshots. Before pictures were read, 7 of its
@@ -479,7 +525,7 @@ Honest list of what this prototype does not do yet.
 
 | Content | State |
 |---|---|
-| Decks and their slide pictures | ✅ complete — all 55 pictures read |
+| Decks and their slide pictures | ✅ complete — all **58** pictures read; 57 indexed, 1 left out as purely decorative |
 | PDFs and standalone images | ✅ complete |
 | YouTube videos | ✅ all 30 indexed — none skipped, none failed |
 
