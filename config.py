@@ -107,7 +107,9 @@ STATUS_FILE = _path_setting("STATUS_FILE", "./index_status.json")
 # ---------- Text LLM (Groq by default, OpenAI-compatible) ----------
 LLM_BASE_URL = setting("LLM_BASE_URL", "https://api.groq.com/openai/v1")
 LLM_API_KEY = setting("LLM_API_KEY", "")
-LLM_MODEL = setting("LLM_MODEL", "llama-3.3-70b-versatile")
+# Groq retired llama-3.3-70b-versatile on 16 August 2026 (free and developer
+# tiers); openai/gpt-oss-120b is its recommended replacement.
+LLM_MODEL = setting("LLM_MODEL", "openai/gpt-oss-120b")
 
 # ---------- Vision model (reads images) ----------
 # Kept as separate settings so the image step can be pointed at a different

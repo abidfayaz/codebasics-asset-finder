@@ -76,28 +76,82 @@ def _call_llm(user_prompt: str, system_prompt: str = None) -> str:
     Raises an ordinary exception if anything goes wrong - the caller decides
     what to do about it.
     """
-    response = requests.post(
-        f"{config.LLM_BASE_URL.rstrip('/')}/chat/completions",
-        headers={
-            "Authorization": f"Bearer {config.LLM_API_KEY}",
-            "Content-Type": "application/json",
-        },
-        json={
-            "model": config.LLM_MODEL,
-            "messages": [
-                {"role": "system", "content": system_prompt or SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt},
-            ],
-            # Low temperature = steady, repeatable answers.
-            "temperature": 0.2,
-            "max_tokens": 400,
-            # Ask for a machine-readable reply so we can split it reliably.
-            "response_format": {"type": "json_object"},
-        },
-        timeout=REQUEST_TIMEOUT_SECONDS,
-    )
-    response.raise_for_status()
-    return response.json()["choices"][0]["message"]["content"]
+    url = f"{config.LLM_BASE_URL.rstrip('/')}/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {config.LLM_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    body = {
+        "model": config.LLM_MODEL,
+        "messages": [
+            {"role": "system", "content": system_prompt or SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ],
+        # Low temperature = steady, repeatable answers.
+        "temperature": 0.2,
+        # Groq's current models "think" before answering, and that thinking
+        # counts against this limit. Leave plenty of room so the answer itself
+        # is never cut off.
+        "max_tokens": 2000,
+        # Ask for a machine-readable reply so we can split it reliably.
+        "response_format": {"type": "json_object"},
+    }
+    # Short explanations need little thinking. Each model family takes its own
+    # value: gpt-oss accepts low/medium/high, Qwen accepts "none".
+    model = config.LLM_MODEL.lower()
+    if "gpt-oss" in model:
+        body["reasoning_effort"] = "low"
+    elif "qwen" in model:
+        body["reasoning_effort"] = "none"
+
+    response = requests.post(url, headers=headers, json=body,
+                             timeout=REQUEST_TIMEOUT_SECONDS)
+
+    # Some models refuse the whole request because of the "reply in JSON" or
+    # "thinking" switches. The instructions already ask for JSON in plain
+    # words, so try once more without them.
+    if response.status_code == 400:
+        body.pop("response_format", None)
+        body.pop("reasoning_effort", None)
+        response = requests.post(url, headers=headers, json=body,
+                                 timeout=REQUEST_TIMEOUT_SECONDS)
+
+    if not response.ok:
+        # Keep the service's own explanation - "400 Bad Request" alone tells
+        # nobody what to fix.
+        raise requests.HTTPError(
+            f"{response.status_code}: {_service_message(response)}",
+            response=response)
+    return response.json()["choices"][0]["message"]["content"] or ""
+
+
+def _service_message(response) -> str:
+    """The AI service's own description of what went wrong, kept short."""
+    try:
+        message = response.json().get("error", {}).get("message", "")
+    except ValueError:
+        message = ""
+    return (message or response.text or "no details given")[:200]
+
+
+def _parse_reasons(raw: str) -> list:
+    """
+    Pull the list of reasons out of the model's reply. Some models wrap the
+    JSON in extra words or a ```json block, which is not a real failure - so
+    look for the JSON object inside the reply before giving up on it.
+    """
+    text = (raw or "").strip()
+    try:
+        return json.loads(text).get("reasons", [])
+    except (json.JSONDecodeError, AttributeError):
+        pass
+    start, end = text.find("{"), text.rfind("}")
+    if start != -1 and end > start:
+        try:
+            return json.loads(text[start:end + 1]).get("reasons", [])
+        except (json.JSONDecodeError, AttributeError):
+            pass
+    raise ValueError("the AI reply was not in the expected format")
 
 
 def simple_reason(query: str, text: str, weak: bool = False) -> str:
@@ -161,7 +215,7 @@ def why_it_matched(query: str, results: list[dict], weak: bool = False) -> list[
     try:
         raw = _call_llm(user_prompt,
                         CLOSEST_SYSTEM_PROMPT if weak else SYSTEM_PROMPT)
-        reasons = json.loads(raw).get("reasons", [])
+        reasons = _parse_reasons(raw)
 
         # Make sure we got a usable list of the right length. If the model
         # returned too few, pad with the simple explanation.
